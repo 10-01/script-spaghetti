@@ -42,8 +42,9 @@ def get_recent_fixture_ids():
     conn = db_connect()
     cur = conn.cursor()
 
-    # get fixtures from last 7 days
-    seven_days_ago = datetime.now() - timedelta(days=7)
+    # get fixtures from last 14 days
+    # bumped from 7 to 14 because weekend matches kept getting missed
+    seven_days_ago = datetime.now() - timedelta(days=14)
     cur.execute("""
         SELECT fixture_id FROM raw_fixtures
         WHERE date >= %s
