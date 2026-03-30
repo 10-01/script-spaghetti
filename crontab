@@ -1,0 +1,57 @@
+# Football Data Pipeline - Cron Schedule
+# Install with: crontab crontab (from the repo root)
+#
+# All times are ET (Eastern Time)
+# Make sure the virtualenv is activated or use full python path
+#
+# Last updated: 2025-01-20 by dave
+# Added MLS pull after sarah complained it was missing
+
+# ============================================
+# DATA INGESTION (2:00 AM - 3:00 AM ET)
+# ============================================
+
+# Pull match/fixture data - this is the main one
+0 2 * * * cd /opt/script-spaghetti && /usr/bin/python3 pull_fixtures.py >> logs/pull_fixtures.log 2>&1
+
+# Pull league standings
+15 2 * * * cd /opt/script-spaghetti && /usr/bin/python3 pull_standings.py >> logs/pull_standings.log 2>&1
+
+# Pull player/squad data - uses lots of API calls, be careful
+# NOTE: this needs standings to run first so it knows which teams to pull
+30 2 * * * cd /opt/script-spaghetti && /usr/bin/python3 pull_players.py >> logs/pull_players.log 2>&1
+
+# Pull team info - doesn't change often but we run it daily anyway
+35 2 * * * cd /opt/script-spaghetti && /usr/bin/python3 pull_teams.py >> logs/pull_teams.log 2>&1
+
+# Pull match events (goals, cards, subs)
+45 2 * * * cd /opt/script-spaghetti && /usr/bin/python3 pull_events.py >> logs/pull_events.log 2>&1
+
+# ============================================
+# COMPUTE JOBS (3:30 AM - 4:30 AM ET)
+# These depend on the pull jobs finishing first.
+# If pulls are slow, computes might run on stale data.
+# TODO: add dependency checks instead of just hoping timing works out
+# ============================================
+
+# Player stats aggregation
+30 3 * * * cd /opt/script-spaghetti && /usr/bin/python3 compute_player_stats.py >> logs/compute_player_stats.log 2>&1
+
+# Team stats (home/away records, goals, clean sheets)
+45 3 * * * cd /opt/script-spaghetti && /usr/bin/python3 compute_team_stats.py >> logs/compute_team_stats.log 2>&1
+
+# League trends (form, streaks)
+0 4 * * * cd /opt/script-spaghetti && /usr/bin/python3 compute_league_trends.py >> logs/compute_league_trends.log 2>&1
+
+# Top scorers rankings
+15 4 * * * cd /opt/script-spaghetti && /usr/bin/python3 compute_top_scorers.py >> logs/compute_top_scorers.log 2>&1
+
+# ============================================
+# MAINTENANCE
+# ============================================
+
+# Rotate logs weekly (Sunday at midnight)
+0 0 * * 0 find /opt/script-spaghetti/logs -name "*.log" -mtime +7 -delete
+
+# old: used to email a summary, disabled after we moved off the old server
+# 0 5 * * * cd /opt/script-spaghetti && python3 send_summary_email.py
