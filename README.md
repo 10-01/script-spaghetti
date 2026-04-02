@@ -1,4 +1,4 @@
-# Football Data Pipeline
+# Soccer Data Pipeline
 
 Scripts for pulling football/soccer data from API-Football and computing stats.
 
@@ -26,7 +26,6 @@ You can also run `./run_daily.sh` manually.
 
 ## Notes
 
-- Ask Dave if you need the API key, he has it somewhere
+- Ask Haydn if you need the API key, he has it somewhere
 - The compute scripts need the pull scripts to finish first obviously
 - If MLS data looks weird its because their season is different from european leagues
-- Check #data-eng on Slack if something breaks
