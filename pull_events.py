@@ -26,6 +26,8 @@ headers = {
     "x-apisports-host": "v3.football.api-sports.io"
 }
 
+EVENT_FIXTURE_LIMIT = int(os.getenv("EVENT_FIXTURE_LIMIT", "100"))
+
 
 def db_connect():
     return psycopg2.connect(
@@ -50,6 +52,7 @@ def get_recent_fixture_ids():
         WHERE date >= %s
         AND status_short = 'FT'
         AND fixture_id NOT IN (SELECT DISTINCT fixture_id FROM raw_events)
+        ORDER BY date ASC
     """, (seven_days_ago,))
 
     ids = [row[0] for row in cur.fetchall()]
@@ -132,11 +135,9 @@ if __name__ == "__main__":
         print("Nothing to do, exiting.")
         exit(0)
 
-    # only process first 30 to stay under API limits
-    # the rest will get picked up tomorrow
-    if len(fixture_ids) > 30:
-        print(f"  Limiting to 30 fixtures (have {len(fixture_ids)})")
-        fixture_ids = fixture_ids[:30]
+    if EVENT_FIXTURE_LIMIT > 0 and len(fixture_ids) > EVENT_FIXTURE_LIMIT:
+        print(f"  Limiting to {EVENT_FIXTURE_LIMIT} fixtures (have {len(fixture_ids)})")
+        fixture_ids = fixture_ids[:EVENT_FIXTURE_LIMIT]
 
     total_events = 0
     for fid in fixture_ids:

@@ -61,10 +61,10 @@ def pull_standings(league_id):
 
     standings_list = data["response"][0]["league"]["standings"]
 
-    # some leagues have groups (like Champions League), we just take first group
-    # for domestic leagues its fine
-    if isinstance(standings_list[0], list):
-        standings = standings_list[0]
+    # Some leagues return multiple grouped tables. Flatten them so we persist
+    # every team instead of silently dropping later groups/conferences.
+    if standings_list and isinstance(standings_list[0], list):
+        standings = [team for group in standings_list for team in group]
     else:
         standings = standings_list
 
